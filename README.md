@@ -78,8 +78,8 @@ Notice how `map.get(index)` with index equals 4 creates a empty stream that does
 The `iterate` operator already exist in Java 8, but in Java 9 we can pass a Predicate to limit the execution of the `iterate` operator in a similar fashion of `takeWhile` and `dropWhile` works.
 
 ```java
-  //Java 8
+	//Java 8
 	Stream.iterate(1, n -> n+1).limit(10).forEach(System.out::print); // 1 2 3 4 5 6 7 8 9 10
-  //Java 9
-	Stream.iterate(1, n -> n<=10, n -> n+1).forEach(System.out::print); // 1 2 3 4 5 6 7 8 9 10
+	//Java 9
+	Stream.iterate(1, n -> n <= 10, n -> n + 1).forEach(System.out::print); // 1 2 3 4 5 6 7 8 9 10
 ```
