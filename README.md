@@ -56,7 +56,30 @@ As you can see, the `forEach` operator only applied for the first and second ele
 
 `ofNullable` returns a stream containing a single non-null element, if the element is null then returns an empty stream.
 
+```java
+	List<Integer> indexes = Arrays.asList(1, 2, 3);
+	
+	Map<Integer, List<String>> map = new HashMap<Integer, List<String>>() {
+		{
+	        put(1, Arrays.asList("bar", "foo"));
+	        put(3, Arrays.asList("foo", "baz"));
+	        put(4, Arrays.asList("baz", "bar"));
+	    }
+	};
+
+	indexes.stream().flatMap(index -> Stream.ofNullable(map.get(index))).forEach(System.out::println);
+	
+	//[bar, foo]
+	//[foo, baz]
 ```
 
+Notice how `map.get(index)` with index equals 4 creates a empty stream that doesn't affect the execution of our program.
 
+The `iterate` operator already exist in Java 8, but in Java 9 we can pass a Predicate to limit the execution of the `iterate` operator in a similar fashion of `takeWhile` and `dropWhile` works.
 
+```java
+  //Java 8
+	Stream.iterate(1, n -> n+1).limit(10).forEach(System.out::print); // 1 2 3 4 5 6 7 8 9 10
+  //Java 9
+	Stream.iterate(1, n -> n<=10, n -> n+1).forEach(System.out::print); // 1 2 3 4 5 6 7 8 9 10
+```
