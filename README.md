@@ -129,7 +129,7 @@ As you can see, the `forEach` operator only applied for the first and second ele
   //[foo, baz]
 ```
 
-Notice how `map.get(index)` with index equals 4 creates a empty stream that doesn't affect the execution of our program.
+Notice how `map.get(index)` with index != 1 or 2 creates a empty stream that doesn't affect the execution of our program.
 
 The `iterate` operator already exist in Java 8, but in Java 9 we can pass a Predicate to limit the execution of the `iterate` operator in a similar fashion of `takeWhile` and `dropWhile` works.
 
