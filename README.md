@@ -5,14 +5,15 @@ This tutorial guides you through all the new features Java 9 has and it explain 
 ## Table of Contents
 
 * [New Collections APIs](#new-collections-apis)
-  * [Populating structures](#populating-structures)
+  * [Factory methods](#factory-methods)
   * [Arrays new methods](#arrays-new-methods)
   * [New Streams operations](#new-streams-operations)
+* [New Process API](#new-process-api)
 
 
 ## New Collections APIs
 
-### Populating structures
+### Factory methods
 
 Java 9 comes with A LOT of static methods defined in the interfaces of the structures like `List`, `Set` and `Map`. These static methods offers a easy way to populate the structures, lets see some examples compared to the Java 8 way.
 
@@ -134,8 +135,48 @@ Notice how `map.get(index)` with index != 1 or 2 creates a empty stream that doe
 The `iterate` operator already exist in Java 8, but in Java 9 we can pass a Predicate to limit the execution of the `iterate` operator in a similar fashion of `takeWhile` and `dropWhile` works.
 
 ```java
-	//Java 8
-	Stream.iterate(1, n -> n+1).limit(10).forEach(System.out::print); // 1 2 3 4 5 6 7 8 9 10
-	//Java 9
-	Stream.iterate(1, n -> n <= 10, n -> n + 1).forEach(System.out::print); // 1 2 3 4 5 6 7 8 9 10
+  //Java 8
+  Stream.iterate(1, n -> n + 1).limit(10).forEach(System.out::print); // 1 2 3 4 5 6 7 8 9 10
+  //Java 9
+  Stream.iterate(1, n -> n <= 10, n -> n + 1).forEach(System.out::print); // 1 2 3 4 5 6 7 8 9 10
 ```
+
+## New Process API
+
+The Process API has been renewed in order to make the code that use it less platform dependant. A new class has been added that can be used to handle the processes: list processes, get PID of a process, destroy, get parents, get childrens and get information about a process.
+
+```java
+  // Create a ProcessHandler for the JVM Process
+  ProcessHandle currentProcess = ProcessHandle.current();
+  
+  // Shows JVM PID
+  System.out.println( currentProcess.getPid() );
+  // Shows JVM Parent PID
+  currentProcess.parent().ifPresent(parent -> System.out.println(parent));
+  
+  // Gets information about the process
+  ProcessHandle.Info processInfo = currentProcess.info();
+  System.out.println( processInfo ); 
+  /* Will print "[user: Optional[Usuario\Usuario], 
+     cmd: C:\Program Files (x86)\Java\jdk-9\bin\java.exe, 
+     startTime: Optional[2016-06-14T23:36:52.836Z], 
+     totalTime: Optional[PT0.2028013S]]"
+  */
+
+  // User of the process
+  processInfo.user().ifPresent(user -> System.out.println(user));
+  // Executable pathname of the process
+  processInfo.command().ifPresent(command -> System.out.println(command));
+  // Total cputime accumulated of the process
+  processInfo.totalCpuDuration().ifPresent(duration -> System.out.println(duration));
+  // Start time of the process
+  processInfo.startInstant().ifPresent(startInstant -> System.out.println(startInstant));
+  // String array of the arguments of the process
+  processInfo.arguments().ifPresent(arguments -> Arrays.stream(arguments).forEach(System.out::println));
+  // All processes visible to the current process
+  ProcessHandle.allProcesses().forEach(System.out::println);
+  // Gets the process with PID = NUMBER (a long value) and detroy it.
+  ProcessHandle.of( NUMBER ).ifPresent(processHandle -> processHandle.destroy());
+```
+
+
