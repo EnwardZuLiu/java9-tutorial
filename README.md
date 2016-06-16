@@ -153,6 +153,10 @@ The Process API has been renewed in order to make the code that use it less plat
   System.out.println( currentProcess.getPid() );
   // Shows JVM Parent PID
   currentProcess.parent().ifPresent(parent -> System.out.println(parent));
+  // Shows all the children processes of the JVM process
+  currentProcess.children().forEach( processHandler -> System.out.println(processHandler.getPid()));
+  // Shows all the descendants processes of the JVM process (children and children's children)
+  currentProcess.descendants().forEach( processHandler -> System.out.println(processHandler.getPid()));
   
   // Gets information about the process
   ProcessHandle.Info processInfo = currentProcess.info();
@@ -177,6 +181,27 @@ The Process API has been renewed in order to make the code that use it less plat
   ProcessHandle.allProcesses().forEach(System.out::println);
   // Gets the process with PID = NUMBER (a long value) and detroy it.
   ProcessHandle.of( NUMBER ).ifPresent(processHandle -> processHandle.destroy());
+  
+  // Here is how to wait for a process to end and then show a message on exit
+  
+  //Get ProcessHandler for process with PID = 3816
+  Optional<ProcessHandle> anotherProcess = ProcessHandle.of( 3816 ); 
+
+  //This isn't necessary but you can see the new ifPresentOrElse method in the Optional class ;)
+  anotherProcess.ifPresentOrElse(
+    process -> System.out.println("Process  " + process.getPid() + " exist"),
+    () -> System.out.println("Such a process doesn't exist")
+  );
+
+  if( anotherProcess.isPresent() ) {
+    // ProcessHandler.onExit() returns a CompetableFuture<ProcessHandler> and we register a message when complete
+    CompletableFuture<ProcessHandle> competable = anotherProcess.get().onExit().whenComplete( 
+      (p,t) -> System.out.println("process " + p.getPid() + " finished.") 
+    );
+    // Waits (blocks thread) for the process to end and then shows the message 
+    competable.get(); 
+  }
+  
 ```
 
-
+That's pretty much it, you have almost the same methods in the `Process` class if you want to do something like this and also handle input and output of the process. Anf if you create a `Process` with `ProcessBuilder.start()` or `Runtime.exec()` you can get its handler with `toHandle()`.
