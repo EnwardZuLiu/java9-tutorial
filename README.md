@@ -13,7 +13,7 @@ This tutorial guides you through all the new features Java 9 has and it explain 
 * [New Http Client](#new-http-client)
 * [New Process API](#new-process-api)
 * [Unified Logger](#unified-logger)
-* [Changes in the private/public API](#changes-in-the-private/public-api)
+* [Changes in the private/public API](#changes-in-the-privatepublic-api)
 
 
 ## Modules
