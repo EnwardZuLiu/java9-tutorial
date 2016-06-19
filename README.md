@@ -18,7 +18,102 @@ This tutorial guides you through all the new features Java 9 has and it explain 
 
 ## Modules
 
+Java 9 is primarily all about modules. By definition, modules are self describing collections of code and data. But in order to introduce modules let’s just say that modules are components which have packages which have classes/interfaces (modules may have some other things, like configuration files, native code, resources, etc). What we need to know to start with modules is that they have a name, a list of the modules which it depends on and a list of the packages that are intended for external (to that module) use.  So let’s write a module, the module declaration is, by convention, inside a file named `module-info.java` and looks something like this:
+
+```java
+module org.foo.baz {
+}
+```
+
+This is a module definition, notice the `module` keyword to define a module named `org.foo.bar`. This is the simplest module that we can make, it can be used for anyone else and only requires on module, the `java.base` module. The `java.base` module is a module inside the JDK and is like the `Object` class of modules, you will always used in every module, in there you will find things like `java.lang` that’s why it’s always used by any module. We can compile module-info.java with the normal `javac` command and the result will be a module descriptor named module-info.class which is used at runtime to resolve the dependencies. Let’s modify this module in order to export something so we can use it, assume we have three classes: First, Second and Third, each of these are in a different package with the same name but without the uppercase. Now if `Third` is only intended to work internally to help classes `First` and `Second` but is never meant to be used outside that context we shouldn’t export the package `org.foo.baz.third`, the module would be something like this:
+
+```java
+module org.foo.baz {
+    exports org.foo.baz.first;
+    exports org.foo.baz.second;
+}
+```
+
+You can see a new keyword `exports` which is use to declare which packages are accessible from outside the module. In order to use those packages in a different module we need to declare that we need them, exports doesn’t make it public to everyone but only for the ones that require that module, so a new module that uses these packages would be like:
+
+```java
+module org.foo.bar {
+    exports org.foo.bar.fourth;
+    requires org.foo.baz;
+}
+```
+
+This new module `org.foo.bar` requires `org.foo.baz` so you can make use of the classes `First` and `Second` in that module, also it requires `java.base` because every module require `java.base`. Notice the new keyword `requires` declaring the modules required. So far we can make a bunch of packages with a bunch of classes and we can encapsulate all within a module that gives a name to all that logic and defines somehow a new concept of accessibility. You need to take in mind that the work  `public` no longer means accessible, class `Third` could have all his members public but we can’t use them outside that module, even if we export package `org.foo.baz.third` we can’t use them without require that module, so that is an important changes to know in Java 9.
+
+Before we continue is very important to know that the entire JDK has been modularized, so we need to require modules from the JDK to access the packages we need, besides `java.base` if we do an import of for example, some packages related to xml we won’t have permissions to use them, we need to require `java.xml` in our module definition. If you want to know what modules you will need to use from the JDK you can see the modules definition of each module or wait until your compilation fails because you don’t have access to some packages. So far what you will never need is the package inside the `java.base` module (`lang`, `util`, `math`, `io`, `nio`, `net`, `security`, `text`, `time`, `javax.crypto`, `javax.security` and `javax.net`).
+
+Now with that clear, let’s continue with our examples. Another new concept is the usage of a module by transitivity, if we write a new module that requires `org.foo.bar` we will do it this way:
+
+```java
+module org.foo.zoo {
+    requires org.foo.bar;
+}
+``` 
+But what is we can make use of class First? We require a module that in its requirement list has the module with that class and package exported, can we use it?, the answer is no. The exports only works for those module that explicitly require the module, there is no transitivity of the exports. However we can make this possibly we a “new” keyword, let’s make only package `org.foo.baz.first` transitive, for that we need to change module `org.foo.baz`:
+
+```java
+module org.foo.baz {
+    exports public org.foo.baz.first;
+    exports org.foo.baz.second;
+}
+```
+
+As you can see in the export we put our “new” `public` keyword and now we can use the First class from `org.foo.zoo` module.
+
+Another concept that is worth mention is the selective export,  if we are making a complex system and we want some module to be able to use some packages for other module but those packages are not intended to be uses for anyone else we can make it possible:
+
+```java
+module org.foo.baz {
+    exports public org.foo.baz.first;
+    exports org.foo.baz.second to org.foo.bar;
+}
+```
+
+Now, using the `to` keyword we define that package` org.foo.baz.second` will be exported but only for module `org.foo.bar` (it still needs to require to use it). This is useful for when we have an internal API but we want to use it for another module as well. One last concept that we will see is Services. Services are a way of deal with consumers and providers modules. Let’s assume that `org.foo.bar.fourth` has class Fourth which uses an API in `org.foo.bar.fourth.provider.AbstractProvider` that doesn’t have an implementation (you know some interface or abstract class) because the implementation will be done in another module so you can use different modules in a pluggable way in order to change the implementation. What we need to do is export all the necessary packages and make use of a new keyword:
+
+```java
+module org.foo.bar {
+    exports org.foo.bar.fourth;
+    exports org.foo.bar.fourth.provider;
+    requires org.foo.baz;
+    uses org.foo.bar.fourth.provider.AbstractProvider;
+}
+```
+
+`AbstractProvider` is our service consumer and because of that `org.foo.bar.fourth.provider` needs to be exported as well. `uses` is a new keyword used in the modules declaration and makes reference to our service consumer in our module. What is left is the service provider with an implementation. That would be our `org.foo.zoo` module with some changes:
+
+```java
+module org.foo.zoo {
+    requires org.foo.bar;
+    provides org.foo.bar.fourth.provider.AbstractProvider with org.foo.zoo.ProviderImpl;
+}
+```
+
+And that’s it, in `ProviderImpl` you most likely will use a `extends` or `implements` to `AbstractProvider`
+
 TODO
+
+One of the best resources about modules out there to the date are the JavaOne videos, you should go watch them:
+
+[JavaOne - Prepare for JDK 9] (https://www.youtube.com/watch?v=nBAUaOoBdGU)
+
+[JavaOne - Introduction to Modular Development] (https://www.youtube.com/watch?v=a99RmjgG5Eo)
+
+[JavaOne - Advanced Modular Development] (https://www.youtube.com/watch?v=YPQ2V-hQb8w)
+
+[JavaOne - Project Jigsaw Under the Hood] (https://www.youtube.com/watch?v=xswtIp730Ho)
+
+[JavaOne - Ask the Architects] (https://www.youtube.com/watch?v=jAL72EhLTXo)
+
+[JavaOne - Project Jigsaw Hack Session] (https://www.youtube.com/watch?v=r2DeuDCCywM)
+
+
+
 
 ## Reactive Streams
 
@@ -222,11 +317,3 @@ The Process API has been renewed in order to make the code that use it less plat
 ```
 
 That's pretty much it, you have almost the same methods in the `Process` class if you want to do something like this and also handle input and output of the process. Anf if you create a `Process` with `ProcessBuilder.start()` or `Runtime.exec()` you can get its handler with `toHandle()`.
-
-## Unified Logger
-
-TODO
-
-## Changes in the private/public API
-
-TODO (varhandle)
