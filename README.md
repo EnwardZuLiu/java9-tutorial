@@ -11,9 +11,9 @@ This tutorial guides you through all the new features Java 9 has and it explain 
   * [Arrays new methods](#arrays-new-methods)
   * [New Streams operations](#new-streams-operations)
 * [New Http Client](#new-http-client)
+  * [HTTP/2 Client](#http2-client)
+  * [Web Sockets](#web-sockets)
 * [New Process API](#new-process-api)
-* [Unified Logger](#unified-logger)
-* [Changes in the private/public API](#changes-in-the-privatepublic-api)
 
 
 ## Modules
@@ -250,6 +250,66 @@ The `iterate` operator already exist in Java 8, but in Java 9 we can pass a Pred
 ```
 
 ## New Http Client
+
+### HTTP/2 Client
+
+Java 9 comes with a new HTTP client that supports HTTP/2 and async request. In order to use the client you will need to use the module `java.httpclient`. Let's start with the basics, do gets and posts.
+
+```java
+import static java.net.http.HttpResponse.asString;
+import static java.net.http.HttpRequest.fromString;
+
+public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
+
+//GET
+HttpResponse response = HttpRequest
+    .create(new URI("https://github.com/"))
+    .headers("Foo", "foo", "Bar", "bar")
+    .GET()
+    .response();
+
+    int statusCode = response.statusCode();
+    String responseBody = response.body(asString());
+    System.out.println(responseBody);
+    
+// POST
+HttpResponse response = HttpRequest
+    .create(new URI("http://www.google.com"))
+    .body(fromString("param1=foo,param2=bar"))
+    .POST()
+    .response();
+		   
+    int statusCode = response.statusCode();
+    if(statusCode == 200) {
+        System.out.println(response.body(asString()));
+    } else {
+        System.out.println("You got a " + statusCode + " code!!");
+    }
+}
+```
+
+So far so good, but when you use `response()` you're blocking your program because it is a synchronous call. To make the calls asynchronous we need to use `responseAsync()` and store the result in a `CompletableFuture<HttpResponse>`. Let’s do it:
+
+```java
+HttpRequest request = HttpRequest
+    .create(new URI("https://github.com/"))
+    .body(noBody())
+    .GET();
+
+CompletableFuture<HttpResponse> cfResponse = request.responseAsync();
+
+while(!cfResponse.isDone()) {
+    System.out.println("This code is executin while waiting for the response");
+    Thread.sleep(100);
+}
+
+HttpResponse response = cfResponse.get();
+System.out.println(response.body(asString()));
+```
+
+TODO
+
+### Web Sockets
 
 TODO
 
