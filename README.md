@@ -10,15 +10,14 @@ This tutorial guides you through all the new features Java 9 has and it explain 
   * [Factory methods](#factory-methods)
   * [Arrays new methods](#arrays-new-methods)
   * [New Streams operations](#new-streams-operations)
-* [New Http Client](#new-http-client)
-  * [HTTP/2 Client](#http2-client)
-  * [Web Sockets](#web-sockets)
+* [New HTTP API with HTTP/2 support](#new-http-api-with-http2-support)
+* [Web Sockets API](#web-sockets-api)
 * [New Process API](#new-process-api)
 
 
 ## Modules
 
-Java 9 is primarily all about modules. By definition, modules are self describing collections of code and data. But in order to introduce modules let’s just say that modules are components which have packages which have classes/interfaces (modules may have some other things, like configuration files, native code, resources, etc). What we need to know to start with modules is that they have a name, a list of the modules which it depends on and a list of the packages that are intended for external (to that module) use.  So let’s write a module, the module declaration is, by convention, inside a file named `module-info.java` and looks something like this:
+Java 9 is primarily all about modules. By definition, modules are self describing collections of code and data. But in order to introduce modules let’s just say that modules are components which have packages and these have classes and interfaces (actually modules may have some other things, like configuration files, native code, resources, etc). What we need to know to start with modules is that they have a name, so let’s write a module, the module declaration is, by convention, inside a file named `module-info.java` and looks something like this:
 
 ```java
 module org.foo.baz {
@@ -249,35 +248,49 @@ The `iterate` operator already exist in Java 8, but in Java 9 we can pass a Pred
   Stream.iterate(1, n -> n <= 10, n -> n + 1).forEach(System.out::print); // 1 2 3 4 5 6 7 8 9 10
 ```
 
-## New Http Client
+## New HTTP API with HTTP/2 support
 
-### HTTP/2 Client
+Java 9 comes with a new HTTP client that supports HTTP/2 and Async request. It still supports HTTP 1.1 and the API is almost protocol agnostic. So before you continue if you have no clue what HTTP/2 does you can look it up or see [this video] (https://www.youtube.com/watch?v=QpLtBftqM04) which also talks a bit about Java. 
 
-Java 9 comes with a new HTTP client that supports HTTP/2 and async request. In order to use the client you will need to use the module `java.httpclient`. Let's start with the basics, do gets and posts.
+In order to use the client you will need to use the module `java.httpclient`. Let's start with the basics, do gets and posts.
 
 ```java
 import static java.net.http.HttpResponse.asString;
+import static java.net.http.HttpResponse.asFile;
+import static java.net.http.HttpResponse.asByteArray;
 import static java.net.http.HttpRequest.fromString;
 
+//I included the main to show you some of the Exceptions you should be aware of 
 public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException, ExecutionException {
 
 //GET
-HttpResponse response = HttpRequest
-    .create(new URI("https://github.com/"))
-    .headers("Foo", "foo", "Bar", "bar")
-    .GET()
-    .response();
+    HttpResponse response = HttpRequest
+        .create(new URI("https://github.com/")) // This returns a HttpRequest.Builder the class that is used to create HttpRequest
+        .headers("Foo", "foo", "Bar", "bar") //This also returns a HttpRequest.Builder. "headers()" uses varargs
+        .GET() // This is where we get out HttpRequest
+        .response(); // This give us a HttpResponse
 
     int statusCode = response.statusCode();
+    
+    // You can get the response as a String
     String responseBody = response.body(asString());
     System.out.println(responseBody);
     
-// POST
-HttpResponse response = HttpRequest
-    .create(new URI("http://www.google.com"))
-    .body(fromString("param1=foo,param2=bar"))
-    .POST()
-    .response();
+    // Or in a file
+    Path path = Paths.get("/path/to/file");
+    Path responseBodyFile = response.body( asFile(path) );
+    System.out.println(responseBodyFile);
+    
+    // Or as a byte[]
+    byte[] responseBodyBytes = response.body(asByteArray());
+    System.out.println(responseBodyBytes.length);
+    
+    // POST
+    HttpResponse response = HttpRequest
+        .create(new URI("http://www.google.com"))
+        .body(fromString("param1=foo,param2=bar"))
+        .POST()
+        .response();
 		   
     int statusCode = response.statusCode();
     if(statusCode == 200) {
@@ -299,7 +312,7 @@ HttpRequest request = HttpRequest
 CompletableFuture<HttpResponse> cfResponse = request.responseAsync();
 
 while(!cfResponse.isDone()) {
-    System.out.println("This code is executin while waiting for the response");
+    System.out.println("This code is executing while waiting for the response");
     Thread.sleep(100);
 }
 
@@ -307,9 +320,32 @@ HttpResponse response = cfResponse.get();
 System.out.println(response.body(asString()));
 ```
 
+This example doesn't really shows the beauty of Async request, let's do something more complex:
+
 TODO
 
-### Web Sockets
+That's for simple requests to public sites, but what if we need to do a more complex request? probably with some cookies or SSL. In that case you will need to build a `HttpClient` and then create the `HttpRequest` from there. `HttpClient` has a lot of methods for configure you client, so let's quickly see some of them:
+
+```java
+HttpResponse response = HttpClient.create() // Creates a HttpClient.Builder from where you can build immutable HttpClient   
+    .cookieManager(cookieManager) //CookieManager from java.net (all these methods returns a HttpClient.Builder)
+    .sslContext(sslContext) // SSLContext from javax.net.ssl
+    .sslParameters(sslParameters) // SSLParameters from javax.net.ssl
+    .authenticator(authenticator) // Authenticator from java.net
+    .proxy(ProxySelector.of(new InetSocketAddress("proxy", 80))) // ProxySelector from java.net has a factory method now
+    .followRedirects(HttpClient.Redirect.SAME_PROTOCOL) // Redirect can be ALWAYS, NEVER, SAME_PROTOCOL or SECURE
+    .build() // returns a HttpClient no longer a HttpClient.Builder
+    .request(URI.create("https://www.github.com/")) // returns a HttpRequest.Builder
+    .GET() // returns a HttpRequest
+    .response(); // finally! our HttpResponse
+```
+
+Many of the parameters you use are in Java for a while, the main idea of that code was to show you how we can chain methods one after another to configure our client and make the request. If you need to do some of this configuration the best you can do is look into the javadocs for specific information about all the methods.
+
+
+TODO (push)
+
+### Web Sockets API
 
 TODO
 
