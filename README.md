@@ -323,9 +323,47 @@ HttpResponse response = cfResponse.get();
 System.out.println(response.body(asString()));
 ```
 
-This example doesn't really shows the beauty of Async request, let's do something more complex:
+This example doesn't really shows the beauty of Async request with the CompletableFuture API, let's request asynchronous a list of web pages and count the amount of characters (This example is based on the one given by the javadocs of HttpRequest):
 
-TODO
+```java
+//First we declare our list of web pages
+List<URI> sites = List.of( new URI("https://github.com/"), new URI("https://www.reddit.com/") );
+ 
+List<CompletableFuture<File>> cfs = sites
+    .parallelStream()
+    .map(site -> {
+        return HttpRequest
+            .create(site)
+            .GET()
+            .responseAsync() // We do Async request to each of them 
+            .thenCompose(response -> {
+                Path path = Paths.get("/path/to/file", site.getHost() + ".txt"); // i.e of file name github.com.txt
+                if (response.statusCode() == 200) {
+                    return response.bodyAsync(asFile(path)); // We store the results in as file
+                } else {
+                    return CompletableFuture.completedFuture(path);
+                }
+            })
+            .thenApply((Path path) -> {
+                return path.toFile(); // We convert from Path to File
+            });
+    })
+    .collect(Collectors.toList());
+
+We wait until everything is done
+CompletableFuture.allOf(cfs.toArray(new CompletableFuture<?>[0])).join();
+
+//For each result we show the length of the file
+cfs.stream()
+    .map( cf -> {
+        try {
+            return cf.get().length();
+        } catch(Exception e) { 
+            return "Unexpected error";
+        }
+    })
+    .forEach(System.out::println);
+```
 
 That's for simple requests to public sites, but what if we need to do a more complex request? probably with some cookies or SSL. In that case you will need to build a `HttpClient` and then create the `HttpRequest` from there. `HttpClient` has a lot of methods for configure you client, so let's quickly see some of them:
 
