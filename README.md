@@ -13,6 +13,7 @@ This tutorial guides you through all the new features Java 9 has and it explain 
 * [New HTTP API with HTTP/2 support](#new-http-api-with-http2-support)
 * [Web Sockets API](#web-sockets-api)
 * [New Process API](#new-process-api)
+* [Improvement to try-with-resources](#improvement-to-try-with-resources)
 
 
 ## Modules
@@ -110,8 +111,6 @@ One of the best resources about modules out there to the date are the JavaOne vi
 [JavaOne - Ask the Architects] (https://www.youtube.com/watch?v=jAL72EhLTXo)
 
 [JavaOne - Project Jigsaw Hack Session] (https://www.youtube.com/watch?v=r2DeuDCCywM)
-
-
 
 
 ## Reactive Streams
@@ -223,8 +222,7 @@ set.stream().dropWhile(x -> x <= 1).forEach(System.out::println);
 
 ```java
 List<Integer> indexes = List.of(0, 1, 2, -1, -2);
-  
-//I hope you already read about the "of" method
+
 Map<Integer, List<String>> map = Map.of(
     1, List.of("bar", "foo"), 
     2, List.of("foo", "baz"), 
@@ -249,11 +247,11 @@ Stream.iterate(1, n -> n + 1).limit(10).forEach(System.out::print); // 1 2 3 4 5
 Stream.iterate(1, n -> n <= 10, n -> n + 1).forEach(System.out::print); // 1 2 3 4 5 6 7 8 9 10
 ```
 
+A final note about this new methods is that you probably don't want to mix `takeWhile` and `dropWhile` with parallel streams, at least if you are trying to work with the longest prefix, because depending on how the instructions are executed you will end up with different results.
+
 ## New HTTP API with HTTP/2 support
 
-Java 9 comes with a new HTTP client that supports HTTP/2 and Async request. It still supports HTTP 1.1 and the API is almost protocol agnostic. So before you continue if you have no clue what HTTP/2 does you can look it up or see [this video] (https://www.youtube.com/watch?v=QpLtBftqM04) which also talks a bit about Java. 
-
-In order to use the client you will need to use the module `java.httpclient`. Let's start with the basics, do gets and posts.
+Java 9 comes with a new HTTP client that supports HTTP/2 and Async request. It still supports HTTP 1.1 and the API is almost protocol agnostic. So before you continue if you have no clue what HTTP/2 does you can look it up or see [this video] (https://www.youtube.com/watch?v=QpLtBftqM04) which also talks a bit about Java. Let's start with the basics, do gets and posts.
 
 ```java
 import static java.net.http.HttpResponse.asString;
@@ -323,7 +321,7 @@ HttpResponse response = cfResponse.get();
 System.out.println(response.body(asString()));
 ```
 
-This example doesn't really shows the beauty of Async request with the CompletableFuture API, let's request asynchronous a list of web pages and count the amount of characters (This example is based on the one given by the javadocs of HttpRequest):
+This example doesn't really shows the beauty of Async request with the CompletableFuture API, let's request asynchronous a list of web pages and count the amount of characters (This example is based on the one given by the javadocs of `HttpRequest`):
 
 ```java
 //First we declare our list of web pages
@@ -473,3 +471,44 @@ if( anotherProcess.isPresent() ) {
 ```
 
 That's pretty much it, you have almost the same methods in the `Process` class if you want to do something like this and also handle input and output of the process. Anf if you create a `Process` with `ProcessBuilder.start()` or `Runtime.exec()` you can get its handler with `toHandle()`.
+
+## Improvement to try-with-resources
+
+One small but nice to know change that have been introduced in Java 9 is in the try-with-resources statement. In the old try-with-resources all the resources should be defined in the try statement, something like this:
+
+```java
+//Java 8 example
+final BufferedReader br1 = new BufferedReader(new InputStreamReader(System.in));
+BufferedReader br2 = new BufferedReader(new InputStreamReader(System.in)); //effectively final
+
+try (BufferedReader r1 = br1;
+    BufferedReader r2 = br2; ) {
+    String line = r1.readLine();
+    System.out.println(line);
+    line = r2.readLine();
+    System.out.println(line);
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+Now, if you have a resource as a final or effectively final variable, you can use it directly in the try-with-resources statement, just like this:
+
+```java
+//Java 9 example
+final BufferedReader br1 = new BufferedReader(new InputStreamReader(System.in));
+BufferedReader br2 = new BufferedReader(new InputStreamReader(System.in)); //effectively final
+
+try (br1; br2) {
+    String line = br1.readLine();
+    System.out.println(line);
+    line = br2.readLine();
+    System.out.println(line);
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+See how we avoid creating new variable in the try statement and the code it's sorter.
+
+Note: if you don't know, a effectively final variable is [a variable or parameter whose value is never changed after it is initialized is effectively final] (http://docs.oracle.com/javase/tutorial/java/javaOO/localclasses.html)
