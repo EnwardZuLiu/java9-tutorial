@@ -94,11 +94,18 @@ module org.foo.zoo {
 }
 ```
 
-And that’s it, in `ProviderImpl` you most likely will use a `extends` or `implements` to `AbstractProvider`
+And that’s it, in `ProviderImpl` you most likely will use a `extends` or `implements` to `AbstractProvider`.
 
-TODO
+The module system along with many of the concepts that surround it it’s a huge change in the JDK and the way that Java programs are designed, but it goes beyond that this are some of the things you should be aware of:
 
-One of the best resources about modules out there to the date are the JavaOne videos, you should go watch them:
+* New tools have been added and some modified: So far you want to look to `jdeps`, `jmod`, `jlink`, `jpkg`, `java`, `javac` and `jtreg`.
+* New file formats to pack the modules: `Modular JAR` and `JMOD`.
+* Automatic modules: the solution to use libraries designed without modules in your module designed system.
+* Profiles: You can create your custom snapshots with only the modules you need and nothing more. You can also use predefined modules designed to create snapshots, these are `compact1`, `compact2` and `compact3`.
+* Restructure of the JDK and JRE: not only you can use modules defined in the JDK but also the structure has change, so say goodbye to `rt.jar` and `tools.jar` among others.
+* Internal APIs have been encapsulated, they will be private in a future: The module system allows the JDK to hide its internal APIs, so you don’t want to use them anymore since some of them will be encapsulated into modules and not exported (not all at once, also there is a migration plan with replacements). Some of the most common are those that have `sun.*` and `*.internal.*`
+
+One of the best resources about modules out there to the date are the JavaOne videos, you should go watch them, they cover most of the items listed above:
 
 [JavaOne - Prepare for JDK 9] (https://www.youtube.com/watch?v=nBAUaOoBdGU)
 
