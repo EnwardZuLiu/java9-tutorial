@@ -5,6 +5,7 @@ This tutorial guides you through most of the new features Java 9 has and explain
 ## Table of Contents
 
 * [Modules](#modules)
+* [JShell](#jshell)
 * [Reactive Streams](#reactive-streams)
 * [New Collections APIs](#new-collections-apis)
   * [Factory methods](#factory-methods)
@@ -119,6 +120,61 @@ One of the best resources about modules out there to the date are the JavaOne vi
 
 [JavaOne - Project Jigsaw Hack Session] (https://www.youtube.com/watch?v=r2DeuDCCywM)
 
+## JShell
+
+JShell is a utility tool added in Java 9 to use Java in a REPL (read-eval-print-loop). JShell allow you to run Java commands without wrapping them in classes and methods (if you know languages like Python you already use REPL in those). JShell is not a new language or a new way to program in Java, it’s just a utility tool that comes very handy for those people trying to learn Java o for experienced ones trying to learn some new API o new languages features like the ones in this guide.
+You can run JShell in the terminal/console since it is in the `/bin` folder and start writing code immediately, here are some examples (you can use tab for autocomplete code):
+
+```java
+jshell> 1+2
+$1 ==> 3
+jshell> int a = 3
+a ==> 3
+jshell> a+$1
+$3 ==> 6
+jshell> System.out.println("I have got: " + $3)
+I have got: 6
+jshell> 78
+$5 ==> 78
+jshell> $5 + $3
+$5 ==> 84
+```
+
+So there a few things you should kwon, first of all, you don’t need semicolons you can avoid those if you don’t like them. Every expression would be stored in a temporary variable and its type will be inferred, as you can see the first thing I did was an addition between two numbers and the result was stored in a variable even if I didn’t specified that. Temporary variables start with the dollar sign followed by a number. The only thing you should be aware of is the implicit type conversion because it can be confused sometimes; you need to know how Java does the conversions:
+
+```java
+jshell> "5" + 5
+$6 ==> "55"
+jshell> "5" + 5.5
+$7 ==> "55.5"
+jshell> "5" + new Date();
+$8 ==> "5Sun Jun 26 19:18:07 ART 2016"
+```
+
+This is important because the temporary variables have type (kind of obvious) so you really want to know what the type is in order to work with them:
+
+```java
+jshell> new Date()
+$10 ==> Sun Jun 26 19:23:48 ART 2016
+jshell> $10.getMonth()
+$11 ==> 5
+jshell> new URL("http://www.google.com").openConnection().getHeaderFields()
+$12 ==> {Transfer-Encoding=[chunked], null=[HTTP/1.1 200 OK], Server=[gws], P3P=
+[CP="This is not a P3P policy! See https://www.google.com/support/accounts/answe
+r/151657?hl=en for more info."], Date=[Sun, 26 Jun 2016 22:29:26 GMT], Accept-Ra
+nges=[none], X-Frame-Options=[SAMEORIGIN], Cache-Control=[private, max-age=0], V
+ary=[Accept-Encoding], Set-Cookie=[NID=80=AeE02ugSxND4hjh7s0CGGrJJswNNHtgrrO-coh
+SUYFMObveYVkxrnNX4jmG4H1wtgFBcS5BHIrXskt_jQiZI-5l9xl3YaV7aJQ1vLRq69ULBoMSk988e5v
+K29a9Ejhrb; expires=Mon, 26-Dec-2016 22:29:26 GMT; path=/; domain=.google.com.ar
+; HttpOnly], Expires=[-1], X-XSS-Protection=[1; mode=block], Content-Type=[text/
+html; charset=ISO-8859-1]}
+```
+
+This last example the result is a `Map<String, List<String>>`, so yeah, probably the types are something you should be really aware of, hopefully as far as I know the final version will inform you the type of the variables. One final thought about this last example is that you don’t have to write all the logic for exceptions, you just make the code and if something crashes it would be informed.
+
+You can see more information of JShell by typing `/help` inside it or in the `/repl/samples` folder.
+
+This tool is not only a standalone application that you can run in the terminal but it’s also an API; most likely you will never use it as an API but be ready to use JShell inside other tools such as IDEs.
 
 ## Reactive Streams
 
