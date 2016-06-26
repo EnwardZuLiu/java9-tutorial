@@ -1,6 +1,6 @@
 # A Guide to Java 9
 
-This tutorial guides you through all the new features Java 9 has and it explain it with code snippets. 
+This tutorial guides you through most of the new features Java 9 has and explains them with code snippets. You should read this as a introduction to some of the new features but not as a in-depth guide.
 
 ## Table of Contents
 
@@ -9,7 +9,7 @@ This tutorial guides you through all the new features Java 9 has and it explain 
 * [New Collections APIs](#new-collections-apis)
   * [Factory methods](#factory-methods)
   * [Arrays new methods](#arrays-new-methods)
-  * [New Streams operations](#new-streams-operations)
+* [New Streams operations](#new-streams-operations)
 * [New HTTP API with HTTP/2 support](#new-http-api-with-http2-support)
 * [Web Sockets API](#web-sockets-api)
 * [New Process API](#new-process-api)
@@ -115,7 +115,12 @@ One of the best resources about modules out there to the date are the JavaOne vi
 
 ## Reactive Streams
 
+Java 9 comes with a reactive streams API that corresponds to the [reactive streams specification](http://www.reactive-streams.org/). There are several third-party APIs that implements reactive streams in Java but in Java 9 they want to add support inside the JDK to reactive streams and empower the streams in Java 8. It's not in the scope of this guide to teach the concepts of reactive streams since there are several resources out there, you can start [with this one](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754). All the interfaces of this API are inside the `Flow` class so let's see what this class is about.
+
+There are four interfaces: `Publisher<T>`, `Subscriber<T>`, `Subscription` and `Porcessor<T, R>`
+
 TODO
+
 
 ## New Collections APIs
 
@@ -186,7 +191,7 @@ System.out.println( Arrays.mismatch(a, b) );
 // 1 because the index of the first mismatch (2 and 9) you can specify ranges
 ```
 
-### New Streams operations
+## New Streams operations
 
 Streams added in Java 8 now had new operators. These are `takeWhile`, `dropWhile`, `ofNullable` and `iterate`.
 
