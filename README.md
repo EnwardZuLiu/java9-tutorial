@@ -416,7 +416,7 @@ The result will be a Map<URI,Path> beacuse the server returs different resources
 
 Final note: remember that Java 9 only adds a client with support for HTTP/2 the server side of the history will eventually comes with Servlet 4.0 for the Java EE platform.
 
-### Web Sockets API
+## Web Sockets API
 
 TODO
 
