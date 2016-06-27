@@ -180,7 +180,104 @@ This tool is not only a standalone application that you can run in the terminal 
 
 Java 9 comes with a reactive streams API that corresponds to the [reactive streams specification](http://www.reactive-streams.org/). There are several third-party APIs that implements reactive streams in Java but in Java 9 they want to add support inside the JDK to reactive streams and empower the streams in Java 8. It's not in the scope of this guide to teach the concepts of reactive streams since there are several resources out there, you can start [with this one](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754). All the interfaces of this API are inside the `Flow` class so let's see what this class is about.
 
-There are four interfaces: `Publisher<T>`, `Subscriber<T>`, `Subscription` and `Porcessor<T, R>`
+There are four interfaces: `Publisher<T>`, `Subscriber<T>`, `Subscription` and `Processor<T, R>`. It's important to know that all this interfaces are designed in an asynchronous way so they are a bit different for the one that we are familiar in Java. So here is how we start implementing those interfaces:
+
+```java
+import java.util.concurrent.Flow.*;
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+        DummyPublisher<String> publisher = new DummyPublisher<String>();
+        DummySubscriber<String> subscriber = new DummySubscriber<String>();
+        publisher.subscribe(subscriber);
+    }
+}
+
+public class DummyPublisher<T> implements Publisher<T> {
+    //See how subscribe() doesn't return a Subscription
+    public void subscribe(Subscriber<? super T> subscriber) {}
+}
+
+public class DummySubscriber<T> implements Subscriber<T> {
+
+    //This is the callback method
+    public void onSubscribe(Subscription subscription) {}
+    public void onComplete() {}
+    public void onError(Throwable throwable) {}
+    public void onNext(T item) {}
+}
+
+public class DummySubscription implements Subscription {
+    public void request(long n) {}
+    public void cancel() {}
+}
+```
+
+It's very important to notice the asynchronous design in here, you will see for example that every method return void, when normally methods like subscribe() will return a Subscription. Here you need to use callbacks to do a “return”, let’s see a basic implementation of a subscription:
+
+```java
+import java.util.concurrent.Flow.*;
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+        DummyPublisher<String> publisher = new DummyPublisher<String>();
+        DummySubscriber<String> subscriber = new DummySubscriber<String>();
+		
+        publisher.subscribe(subscriber);
+        publisher.subscribe(subscriber); //Not allowed
+    }
+}
+
+public class DummyPublisher<T> implements Publisher<T> {
+
+    //We will allow only one supplier
+    private boolean subscribed;
+	
+    public DummyPublisher() {
+        subscribed = false;
+    }
+	
+    //See how subscribe() doesn't return a Subscription
+    public void subscribe(Subscriber<? super T> subscriber) {
+        if( subscribed == false) {
+            subscribed = true;
+            // This is the equivalent to return the subscription, we call a callback
+            subscriber.onSubscribe(new DummySubscription());
+        } else {
+            System.out.println("This subscriber it's already subscribed");
+            subscriber.onError(new IllegalStateException("We don't accept more subscriber, sorry"));
+        }
+    }
+}
+
+public class DummySubscriber<T> implements Subscriber<T> {
+	
+    private Subscription subscription;
+	
+	//This is the callback method
+	public void onSubscribe(Subscription subscription) {
+		this.subscription = subscription;
+		System.out.println("Successfully subscribed");
+	}
+	
+	public void onComplete() {}
+	
+	public void onError(Throwable throwable) {
+        System.out.println("Can subscribe publisher says: " + throwable.getMessage());
+	}
+	
+	public void onNext(T item) {}
+
+}
+
+public class DummySubscription implements Subscription {
+    public void request(long n) {}
+	public void cancel() {}
+}
+```
+
+That code shows how you can subscribe one subscriber and also how you can't deny one subscriber to subscribe that specific publisher. Now that we can subscribe to one publisher let’s see how we can publish information and also cancel the subscription so we stop listening to the publisher.
+
 
 TODO
 
