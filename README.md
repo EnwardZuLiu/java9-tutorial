@@ -11,6 +11,7 @@ This tutorial guides you through most of the new features Java 9 has and explain
   * [Factory methods](#factory-methods)
   * [Arrays new methods](#arrays-new-methods)
 * [New Streams operations](#new-streams-operations)
+* [Additions to Optional](#additions-to-optional)
 * [New HTTP API with HTTP/2 support](#new-http-api-with-http2-support)
 * [Web Sockets API](#web-sockets-api)
 * [New Process API](#new-process-api)
@@ -414,6 +415,68 @@ Stream.iterate(1, n -> n <= 10, n -> n + 1).forEach(System.out::print); // 1 2 3
 
 A final note about this new methods is that you probably don't want to mix `takeWhile` and `dropWhile` with parallel streams, at least if you are trying to work with the longest prefix, because depending on how the instructions are executed you will end up with different results.
 
+## Additions to Optional
+
+We have some new methods for `Optional` there are no big changes in here but some of them are very useful. First of all, the method `ifPresentOrElse()` was added, as you may expect it's the same that `ifPresent()` but with an else in its second argument:
+
+```java
+someOptional.ifPresentOrElse(
+	someValue -> System.out.println("Value:  " + someValue + " exist"), 
+    () -> System.out.println("Value doesn't exist")
+);
+```
+
+Another new method that is very handy it's the new `or()` method, now we can choose a value for some `Optional` if it doesn't have anything in it.
+
+```java
+Optional<Integer> optional = Optional.empty();
+optional.or(() -> Optional.of(2)).ifPresent(s -> System.out.println(s)); //2
+```
+
+As you can see the `or()` method returns a new `Optional` since the first one was empty, this can be very useful to chain Optionals when you trying to return one in a method:
+
+```java
+public Optional<String> getFromCache(String key) {
+	return cache.getValueFor(key)
+			.or(() -> getFromDatabase(key));
+}
+
+public Optional<String> getFromDatabase(String key) {
+	return dababase.getValueFor(key);
+}
+```
+
+The last thing that is worth mention it is the possibility of transforming `Optional` to `Stream`.
+
+```java
+Optional<Integer> optional = Optional.of(1);
+optional.stream().forEach(System.out::println); //1
+```
+
+This can be useful when dealing with collections of objects that have some method returning an `Optional`:
+
+```java
+class myObject {
+	public Optional<Integer> getOptional() {
+		if(Math.random() > 0.5) {
+			return Optional.of(1);
+		}
+		return Optional.empty();
+	}
+}
+
+List<myObject> list = List.of( new myObject(), new myObject(), new myObject(), new myObject() );
+
+Stream<Integer> resultStream = list.stream()
+		.map(mo -> mo.getOptional()) //Here we have a Stream<Optional<Integer>>
+		.filter(Optional::isPresent) //We discard the empty ones
+		.map(Optional::get); //We return the Integers
+
+resultStream.forEach(System.out::println); //Will print some "1"
+```
+
+That is all the new stuff in the `Optional` class.
+
 ## New HTTP API with HTTP/2 support
 
 Java 9 comes with a new HTTP client that supports HTTP/2 and Async request. It still supports HTTP 1.1 and the API is almost protocol agnostic. So before you continue if you have no clue what HTTP/2 does you can look it up or see [this video] (https://www.youtube.com/watch?v=QpLtBftqM04) which also talks a bit about Java. Let's start with the basics, do gets and posts.
@@ -618,12 +681,6 @@ ProcessHandle.of( NUMBER ).ifPresent(processHandle -> processHandle.destroy());
 
 //Get ProcessHandler for process with PID = 3816
 Optional<ProcessHandle> anotherProcess = ProcessHandle.of( 3816 ); 
-
-//This isn't necessary but you can see the new ifPresentOrElse method in the Optional class ;)
-anotherProcess.ifPresentOrElse(
-    process -> System.out.println("Process  " + process.getPid() + " exist"), 
-    () -> System.out.println("Such a process doesn't exist")
-);
 
 if( anotherProcess.isPresent() ) {
     // ProcessHandler.onExit() returns a CompetableFuture<ProcessHandler> and we register a message when complete
