@@ -16,6 +16,7 @@ This tutorial guides you through most of the new features Java 9 has and explain
 * [Web Sockets API](#web-sockets-api)
 * [New Process API](#new-process-api)
 * [Miscellaneous](#miscellaneous)
+* [Other things you may be interested about](#other-things-you-may-be-interested-about)
 
 
 ## Modules
@@ -804,7 +805,7 @@ String _ = new String(); //won't compile in Java 9
 This it is an isolated change and we will see the "why" in future releases of the JDK, as far as I know they plan to do something like this:
 
 ```java
-Map<String, _> = new Map<String, _>();
+Map<String, _> = new HashMap<String, _>();
 ```
 
 But we can't know exactly what this is or if it is going to be implemented.
@@ -823,4 +824,30 @@ public static <T> List<T> asList(T... a) {
 
 This annotation can only be used in methods that cannot be overridden (static, final, private, constructors) however private methods were omitted in Java 7 and they are adding that with Java 9.
 
+### Streamified APIs
 
+In Java 9 as we see with Optionals or the HTTP Client the APIs are supporting Streams more an more, you will find that several classes now have new methods that breturn some kind of Stream, this is part of a modernization of the APIs and we can find small changes all over the Java libraries. Some examples are:
+
+```java
+"Some String".chars()
+	.filter(Character::isLowerCase)
+	.mapToObj(c -> new String(Character.toChars(c)))
+	.forEach(System.out::print); //ometring
+
+LocalDate.now()
+	.datesUntil(LocalDate.of(2017, 10, 20), Period.ofDays(1))  
+	.forEach(System.out::println); //All the date from now to that day
+```
+
+## Other things you may be interested about
+
+### JavaDoc.Next
+
+[JavaDoc.Next](http://openjdk.java.net/projects/javadoc-next/) it is a project to improve the JavaDocs, it include:
+* HTML5 Output
+* Updated Doclet API
+* New search box to search among the JavaDocs
+
+### String Enhancements
+
+The String performace has been improved. [more info](https://www.youtube.com/watch?v=_evzaAkd594)
