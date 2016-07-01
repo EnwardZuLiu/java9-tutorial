@@ -15,7 +15,7 @@ This tutorial guides you through most of the new features Java 9 has and explain
 * [New HTTP API with HTTP/2 support](#new-http-api-with-http2-support)
 * [Web Sockets API](#web-sockets-api)
 * [New Process API](#new-process-api)
-* [Improvement to try-with-resources](#improvement-to-try-with-resources)
+* [Miscellaneous](#miscellaneous)
 
 
 ## Modules
@@ -171,7 +171,7 @@ K29a9Ejhrb; expires=Mon, 26-Dec-2016 22:29:26 GMT; path=/; domain=.google.com.ar
 html; charset=ISO-8859-1]}
 ```
 
-This last example the result is a `Map<String, List<String>>`, so yeah, probably the types are something you should be really aware of, hopefully as far as I know the final version will inform you the type of the variables. One final thought about this last example is that you don’t have to write all the logic for exceptions, you just make the code and if something crashes it would be informed.
+In the last example the result is a `Map<String, List<String>>`, so yeah, probably the types are something you should be really aware of, hopefully as far as I know the final version will inform you the type of the variables. One final thought about this last example is that you don’t have to write all the logic for exceptions, you just make the code and if something crashes it would be informed.
 
 You can see more information of JShell by typing `/help` inside it or in the `/repl/samples` folder.
 
@@ -694,7 +694,9 @@ if( anotherProcess.isPresent() ) {
 
 That's pretty much it, you have almost the same methods in the `Process` class if you want to do something like this and also handle input and output of the process. Anf if you create a `Process` with `ProcessBuilder.start()` or `Runtime.exec()` you can get its handler with `toHandle()`.
 
-## Improvement to try-with-resources
+## Miscellaneous
+
+### Improvement to try-with-resources
 
 One small but nice to know change that have been introduced in Java 9 is in the try-with-resources statement. In the old try-with-resources all the resources should be defined in the try statement, something like this:
 
@@ -734,3 +736,91 @@ try (br1; br2) {
 See how we avoid creating new variable in the try statement and the code it's sorter.
 
 Note: if you don't know, a effectively final variable is [a variable or parameter whose value is never changed after it is initialized is effectively final] (http://docs.oracle.com/javase/tutorial/java/javaOO/localclasses.html)
+
+### Diamond operator for anonymous classes
+
+This it is only possible if the argument type of the inferred type is denotable. Now you can declare anonymous classes with empty diamond operators just like this:
+
+```java
+Comparator<Double> comparator = new Comparator<>() {
+	@Override
+	public int compare(Double d1, Double d2) {
+		return Double.compare(d1, d2);
+	}
+};
+```
+
+Notice how we do not specify the type inside the diamond when creating the new object.
+
+### Private methods for interfaces
+
+In addition to static and default methods in Java 8, now we can add private methods to interfaces in order to use them when we want to shere code between non abstract methods.
+
+```java
+interface MyInterface {
+	//Static method in Java 8
+    static void sayHi() {
+		talking();
+		System.out.println("Hi");
+	}
+	//Default method in Java 8
+	default void sayGoodBye() {
+		talking();
+		def();
+		System.out.println("Good bye");
+	}
+	//Private method in Java 9, it is used by multiple methods in the interface.
+	//Cannot be used outside the interface
+    private static void talking() {
+        System.out.println("I am going to talk");
+    }
+    //We can use them without static keyword
+    private void def() {
+        System.out.println("Default method");
+    }
+}
+
+class MyObject implements MyInterface {
+	public void sayHi() {
+		MyInterface.super.sayGoodBye();
+	}
+}
+
+
+
+MyObject myObject = new MyObject();
+MyInterface.sayHi();
+myObject.sayGoodBye();
+```
+
+### Underscore identifier is gone
+
+Just a small change that can break your code when you migrate to Java 9 it is the underscore as a keyword, that means that you cannot use it any longer as a identifier:
+
+```java
+String _ = new String(); //won't compile in Java 9
+```
+
+This it is an isolated change and we will see the "why" in future releases of the JDK, as far as I know they plan to do something like this:
+
+```java
+Map<String, _> = new Map<String, _>();
+```
+
+But we can't know exactly what this is or if it is going to be implemented.
+
+### @SafeVarargs on private instance methods
+
+In Java 7 the annotation `@SafeVarargs` was introduced in the JDK to denoted that one method that uses varargs it is going to use them properly and won't generate heap  pollution. We can see this annotation being used in methods like for example `Arrays.asList()`.
+
+```java
+@SafeVarargs
+@SuppressWarnings("varargs")
+public static <T> List<T> asList(T... a) {
+    return new ArrayList<>(a);
+}
+```
+
+This annotation can only be used in methods that cannot be overridden (static, final, private, constructors) however private methods were omitted in Java 7 and they are adding that with Java 9.
+
+
