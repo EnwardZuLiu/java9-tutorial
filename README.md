@@ -1,6 +1,6 @@
 # A Guide to Java 9
 
-This tutorial guides you through most of the new features Java 9 has and explains them with code snippets. You should read this as a introduction to some of the new features but not as a in-depth guide.
+This tutorial guides you through most of the new features Java 9 has and explains them with code snippets. You should read this as an introduction to some of the new features but not as an in-depth guide.
 
 ## Table of Contents
 
@@ -15,6 +15,7 @@ This tutorial guides you through most of the new features Java 9 has and explain
 * [New HTTP API with HTTP/2 support](#new-http-api-with-http2-support)
 * [Web Sockets API](#web-sockets-api)
 * [New Process API](#new-process-api)
+* [Stack Walker](#stack-walker)
 * [Miscellaneous](#miscellaneous)
 * [Other things you may be interested about](#other-things-you-may-be-interested-about)
 
@@ -694,6 +695,10 @@ if( anotherProcess.isPresent() ) {
 ```
 
 That's pretty much it, you have almost the same methods in the `Process` class if you want to do something like this and also handle input and output of the process. Anf if you create a `Process` with `ProcessBuilder.start()` or `Runtime.exec()` you can get its handler with `toHandle()`.
+
+## Stack Walker
+
+TODO
 
 ## Miscellaneous
 
