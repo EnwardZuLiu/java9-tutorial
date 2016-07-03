@@ -189,7 +189,7 @@ There are four interfaces: `Publisher<T>`, `Subscriber<T>`, `Subscription` and `
 import java.util.concurrent.Flow.*;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         DummyPublisher<String> publisher = new DummyPublisher<String>();
         DummySubscriber<String> subscriber = new DummySubscriber<String>();
         publisher.subscribe(subscriber);
@@ -222,40 +222,52 @@ It's very important to notice the asynchronous design in here, you will see for 
 import java.util.concurrent.Flow.*;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
-        DummyPublisher<String> publisher = new DummyPublisher<String>();
-        DummySubscriber<String> subscriber = new DummySubscriber<String>();
+
+	public static void main(String[] args) {
+		DummyPublisher<String> publisher = new DummyPublisher<String>();
+		DummySubscriber<String> subscriber1 = new DummySubscriber<String>();
+		DummySubscriber<String> subscriber2 = new DummySubscriber<String>();
 		
-        publisher.subscribe(subscriber);
-        publisher.subscribe(subscriber); //Not allowed
-    }
+		publisher.subscribe(subscriber1);
+		publisher.subscribe(subscriber2); //It won't be possible our custom publisher only accepts one sub.
+
+		subscriber1.getSubscription().cancel(); //We will stop listening to the publisher.
+		
+		//We caannot subscribe again to that publisher, we need to implement something that sets the
+		//boolean variable to false
+	}
+
 }
 
-public class DummyPublisher<T> implements Publisher<T> {
+class DummyPublisher<T> implements Publisher<T> {
 
-    //We will allow only one supplier
-    private boolean subscribed;
+	//We will allow only one supplier
+	private boolean subscribed;
 	
-    public DummyPublisher() {
-        subscribed = false;
-    }
+	public DummyPublisher() {
+		subscribed = false;
+	}
 	
-    //See how subscribe() doesn't return a Subscription
-    public void subscribe(Subscriber<? super T> subscriber) {
-        if( subscribed == false) {
-            subscribed = true;
-            // This is the equivalent to return the subscription, we call a callback
-            subscriber.onSubscribe(new DummySubscription());
-        } else {
-            System.out.println("This subscriber it's already subscribed");
-            subscriber.onError(new IllegalStateException("We don't accept more subscriber, sorry"));
-        }
-    }
+	//See how subscribe() doesn't return a Subscription
+	public void subscribe(Subscriber<? super T> subscriber) {
+		if( subscribed == false) {
+			subscribed = true;
+			// This is the equivalent to return the subscription, we call a callback
+			subscriber.onSubscribe(new DummySubscription());
+		} else {
+			System.out.println("This subscriber it's already subscribed");
+			subscriber.onError(new IllegalStateException("We don't accept more subscriber, sorry"));
+		}
+	}
 }
 
-public class DummySubscriber<T> implements Subscriber<T> {
+class DummySubscriber<T> implements Subscriber<T> {
 	
-    private Subscription subscription;
+	private Subscription subscription;
+	
+	public Subscription getSubscription() {
+		return this.subscription;
+	}
 	
 	//This is the callback method
 	public void onSubscribe(Subscription subscription) {
@@ -263,23 +275,33 @@ public class DummySubscriber<T> implements Subscriber<T> {
 		System.out.println("Successfully subscribed");
 	}
 	
-	public void onComplete() {}
+	public void onComplete() {
+		System.out.println("Completed");
+	}
 	
 	public void onError(Throwable throwable) {
-        System.out.println("Can subscribe publisher says: " + throwable.getMessage());
+		System.out.println("Cannot subscribe. Publisher says: " + throwable.getMessage());
 	}
 	
 	public void onNext(T item) {}
-
 }
 
-public class DummySubscription implements Subscription {
-    public void request(long n) {}
-	public void cancel() {}
+class DummySubscription implements Subscription {
+	public void request(long n) {}
+	public void cancel() {
+		System.out.println("Subscription cancelled");
+	}
 }
+
+/*Output:
+Successfully subscribed
+This subscriber it's already subscribed
+Cannot subscribe. Publisher says: We don't accept more subscriber, sorry
+Subscription cancelled
+*/
 ```
 
-That code shows how you can subscribe one subscriber and also how you can't deny one subscriber to subscribe that specific publisher. Now that we can subscribe to one publisher let’s see how we can publish information and also cancel the subscription so we stop listening to the publisher.
+That code shows how you can subscribe one subscriber, how a publisher can stop accepting subscribers and how we can cancel a subscription. Now that we can subscribe to one publisher let’s see how we can publish information.
 
 
 TODO
