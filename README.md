@@ -15,7 +15,6 @@ This tutorial guides you through most of the new features Java 9 has and explain
 * [New HTTP API with HTTP/2 support](#new-http-api-with-http2-support)
 * [Web Sockets API](#web-sockets-api)
 * [New Process API](#new-process-api)
-* [Stack Walker](#stack-walker)
 * [Miscellaneous](#miscellaneous)
 * [Other things you may be interested about](#other-things-you-may-be-interested-about)
 
@@ -718,9 +717,6 @@ if( anotherProcess.isPresent() ) {
 
 That's pretty much it, you have almost the same methods in the `Process` class if you want to do something like this and also handle input and output of the process. Anf if you create a `Process` with `ProcessBuilder.start()` or `Runtime.exec()` you can get its handler with `toHandle()`.
 
-## Stack Walker
-
-TODO
 
 ## Miscellaneous
 
@@ -814,8 +810,6 @@ class MyObject implements MyInterface {
 	}
 }
 
-
-
 MyObject myObject = new MyObject();
 MyInterface.sayHi();
 myObject.sayGoodBye();
@@ -861,9 +855,83 @@ In Java 9 as we see with Optionals or the HTTP Client the APIs are supporting St
 	.mapToObj(c -> new String(Character.toChars(c)))
 	.forEach(System.out::print); //ometring
 
+//------------------------------------------------------
+
 LocalDate.now()
 	.datesUntil(LocalDate.of(2017, 10, 20), Period.ofDays(1))  
 	.forEach(System.out::println); //All the date from now to that day
+
+//------------------------------------------------------
+
+try (Scanner sc = new Scanner(PATH_TO_FILE)) {
+  Pattern pat = Pattern.compile("[A-Z]{7,}");
+  //all sequences of characters consisting of seven or more Latin capital letters
+  sc.findAll(pat).map(MatchResult::group).forEach(System.out::println);
+}
+
+//------------------------------------------------------
+
+String text = "Test string, Test string";
+Matcher matcher = Pattern.compile("(string)").matcher(text);
+matcher.results().map(MatchResult::group).forEach(System.out::println); // string string
+
+//------------------------------------------------------
+
+NetworkInterface.networkInterfaces()  
+	.flatMap(NetworkInterface::inetAddresses)
+	.forEach(System.out::println); //IP address of your network interfaces
+
+```
+
+### Get package name
+
+With the addition of modules, this probably will be a handy method to use:
+
+```java
+System.out.println(this.getClass().getPackageName()); //prints the package name
+```
+
+### Enhance deprecated
+
+The deprecated annotation has been enhanced, now you can use parameters to specified details about the deprecation:
+
+```java
+@Deprecated(since ="1.4", forRemoval = true)
+```
+
+### InputStreams redirected to OutputStreams
+
+A new method can make this redirection very straightforward:
+
+```java
+File f = new File(PATH_TO_FILE);
+new FileInputStream(f).transferTo(System.out); //Will print the file's content
+```
+
+### StackWalker
+
+`StackWalker` is a new class that it's used to navigate the stack of a thread, here is an example showing all the methods called in the thread:
+
+```java
+private static List<StackWalker.StackFrame> walkStackframe() {
+    return StackWalker.getInstance().walk(s ->
+            s.collect(Collectors.toList())
+        );
+}
+
+public static void main(String[] args) throws Exception {
+	walkStackframe().stream()
+	.map(frame -> frame.getMethodName())
+	.forEach(System.out::println); // walkStackframe, main
+```
+
+For `StackWalker` you don't have many options more than `walk()` or `forEach()`, and for `StackFrame` you can extract all the information of the frame as you want with: `getLineNumber()`, `getFileName()`, `getMethodName()`, `getClassName()`. You need to use lambdas and streams to do mapping, filters, limits and all that kind of stuff. 
+
+### Unified Logger
+
+```java
+System.Logger logger = System.getLogger(MyClass.class.getSimpleName());
+logger.log(System.Logger.Level.INFO, "Logger: {0}", logger);
 ```
 
 ## Other things you may be interested about
