@@ -923,6 +923,7 @@ public static void main(String[] args) throws Exception {
 	walkStackframe().stream()
 	.map(frame -> frame.getMethodName())
 	.forEach(System.out::println); // walkStackframe, main
+}
 ```
 
 For `StackWalker` you don't have many options more than `walk()` or `forEach()`, and for `StackFrame` you can extract all the information of the frame as you want with: `getLineNumber()`, `getFileName()`, `getMethodName()`, `getClassName()`. You need to use lambdas and streams to do mapping, filters, limits and all that kind of stuff. 
